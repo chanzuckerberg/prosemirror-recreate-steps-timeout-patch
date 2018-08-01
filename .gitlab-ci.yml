@@ -7,8 +7,10 @@ build:
   stage: build
   script:
     - yarn install
+    - yarn run lint
     - yarn run build
     - yarn run coverage
+    # - yarn run lint # enable once initial issues fixed.
   artifacts:
     paths:
       - ./coverage

@@ -1,6 +1,4 @@
-export {
-    recreateTransform
-} from "./recreate"
+export { recreateTransform } from "./recreate"
 export {
     mergeTransforms,
     Merge
