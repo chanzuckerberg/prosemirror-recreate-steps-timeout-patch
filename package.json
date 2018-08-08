@@ -15,7 +15,7 @@
         "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
         "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
         "prepare": "npm run build",
-        "check_js": "jshint src/*"
+        "lint": "eslint src/*"
     },
     "keywords": [
         "prosemirror",
@@ -45,6 +45,12 @@
     },
     "devDependencies": {
         "@types/prosemirror-transform": "^1.1.0",
+        "eslint": "^5.3.0",
+        "eslint-config-standard": "^11.0.0",
+        "eslint-plugin-import": "^2.13.0",
+        "eslint-plugin-node": "^7.0.1",
+        "eslint-plugin-promise": "^3.8.0",
+        "eslint-plugin-standard": "^3.1.0",
         "ist": "^1.0.2",
         "jshint": "^2.9.6",
         "mocha": "^5.2.0",
