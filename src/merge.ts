@@ -3,7 +3,32 @@ import { Node, Slice } from "prosemirror-model"
 import { Mapping, Step, Transform } from "prosemirror-transform"
 import { recreateTransform } from "./recreate"
 
-export function mergeTransforms(tr1: Transform, tr2: Transform, automerge = true, rebase = false, wordDiffs = false) {
+export interface MergeTransformPair {
+    tr: Transform,
+    merge: Merge
+}
+
+export interface SpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number }
+export interface DeletedSpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number, from: number, to: number }
+
+export interface ConflictingChangeSet {
+    inserted: SpanLike,
+    deleted: DeletedSpanLike
+}
+
+export interface ChangeSetLike {
+    inserted: SpanLike[],
+    deleted: DeletedSpanLike[]
+}
+
+interface AutomergeResult {
+    tr: Transform,
+    changes: ChangeSet,
+    tr1NoConflicts?: Transform,
+    tr2NoConflicts?: Transform
+}
+
+export function mergeTransforms(tr1: Transform, tr2: Transform, automerge = true, rebase = false, wordDiffs = false): MergeTransformPair {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
         // be presented as alternatives to the user.
     const {tr, changes, tr1NoConflicts, tr2NoConflicts} = automerge ?
@@ -62,19 +87,6 @@ function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs
             trNonConflict.doc, changes, [], [], conflictingSteps2, {inserted, deleted}
         )
     }
-}
-
-export interface SpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number }
-export interface DeletedSpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number, from: number, to: number }
-
-export interface ConflictingChangeSet {
-    inserted: SpanLike,
-    deleted: DeletedSpanLike
-}
-
-export interface ChangeSetLike {
-    inserted: SpanLike[],
-    deleted: DeletedSpanLike[]
 }
 
 export class Merge {
@@ -152,7 +164,7 @@ export class Merge {
         return new Merge(doc, changes, conflicts, conflictingSteps1, conflictingSteps2, {inserted, deleted})
     }
 
-    public apply(user, index): { tr: Transform, merge: Merge } {
+    public apply(user, index): MergeTransformPair {
         const step = user === 1
                 ? this.conflictingSteps1.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1]
                 : this.conflictingSteps2.find(([conflictIndex, conflictStep]) => conflictIndex === index)[1],
@@ -242,13 +254,6 @@ function mapTransform(tr, doc, map): Transform<any> {
 
 function trDoc(tr: Transform, index = 0): Node {
     return tr.docs.length > index ? tr.docs[index] : tr.doc
-}
-
-interface AutomergeResult {
-    tr: Transform,
-    changes: ChangeSet,
-    tr1NoConflicts?: Transform,
-    tr2NoConflicts?: Transform
 }
 
 function noAutomergeTransforms(tr1, tr2): AutomergeResult {
