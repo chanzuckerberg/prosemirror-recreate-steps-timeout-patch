@@ -1,4 +1,4 @@
-# prosemirror-threeway-merge
+# prosemirror-recreate-steps
 
 This is a non-core module of [ProseMirror](http://prosemirror.net).
 ProseMirror is a well-behaved rich semantic content editor based on
@@ -20,7 +20,7 @@ for synchronizing their work.
 Recreating a `Transform` works this way:
 
 ```js
-import {recreateTransform} from "prosemirror-threeway-merge"
+import {recreateTransform} from "prosemirror-recreate-steps"
 
 let tr = recreateTransform(
     startDoc, 
@@ -33,7 +33,7 @@ let tr = recreateTransform(
 Merging `Transforms` works this way:
 
 ```js
-import {mergeTransform} from "prosemirror-threeway-merge"
+import {mergeTransform} from "prosemirror-recreate-steps"
 
 let {
     tr, 
