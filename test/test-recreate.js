@@ -4,18 +4,16 @@ const ist = require("ist")
 const {recreateTransform} = require("../dist/index")
 
 
-function diff(startDoc, endDoc, complexSteps, wordDiffs, steps) {
-    let tr = recreateTransform(startDoc, endDoc, complexSteps, wordDiffs)
+function testRecreate(startDoc, endDoc, steps = [], options = {}) {
+    let tr = recreateTransform(startDoc, endDoc, options.complexSteps, options.wordDiffs)
     ist(JSON.stringify(tr.steps.map(step => step.toJSON())), JSON.stringify(steps))
 }
 
 describe("simpleNodeDiffs", () => {
     it("add em", () =>
-        diff(
+        testRecreate(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 12,
@@ -29,16 +27,15 @@ describe("simpleNodeDiffs", () => {
                         "text": "italic"
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("remove strong", () =>
-        diff(
+        testRecreate(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 12,
@@ -49,16 +46,15 @@ describe("simpleNodeDiffs", () => {
                         "text": "bold"
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("wrap in blockquote", () =>
-        diff(
+        testRecreate(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -75,16 +71,15 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("unwrap from blockquote", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -98,16 +93,15 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 
     it("change headline type", () =>
-        diff(
+        testRecreate(
             doc(h1("A title")),
             doc(h2("A title")),
-            false,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -124,7 +118,8 @@ describe("simpleNodeDiffs", () => {
                         }]
                     }]
                 }
-            }]
+            }],
+            {complexSteps: false}
         )
     )
 })
@@ -132,11 +127,9 @@ describe("simpleNodeDiffs", () => {
 describe("complexNodeDiffs", () => {
 
     it("add em", () =>
-        diff(
+        testRecreate(
             doc(p("Before textitalicAfter text")),
             doc(p("Before text", em("italic"), "After text")),
-            true,
-            false,
             [{
                 "stepType": "addMark",
                 "mark": {
@@ -149,31 +142,24 @@ describe("complexNodeDiffs", () => {
     )
 
     it("remove strong", () =>
-        diff(
+        testRecreate(
             doc(p("Before text", strong("bold"), "After text")),
             doc(p("Before textboldAfter text")),
-            false,
-            false,
             [{
-                "stepType": "replace",
+                "stepType": "removeMark",
+                "mark": {
+                    "type": "strong"
+                },
                 "from": 12,
-                "to": 16,
-                "slice": {
-                    "content": [{
-                        "type": "text",
-                        "text": "bold"
-                    }]
-                }
+                "to": 16
             }]
         )
     )
 
     it("wrap in blockquote", () =>
-        diff(
+        testRecreate(
             doc(p("A quoted sentence")),
             doc(blockquote(p("A quoted sentence"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -195,11 +181,9 @@ describe("complexNodeDiffs", () => {
     )
 
     it("unwrap from blockquote", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("A quoted sentence"))),
             doc(p("A quoted sentence")),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 0,
@@ -218,11 +202,9 @@ describe("complexNodeDiffs", () => {
     )
 
     it("change headline type", () =>
-        diff(
+        testRecreate(
             doc(h1("A title")),
             doc(h2("A title")),
-            true,
-            false,
             [{
                 "stepType": "replaceAround",
                 "from": 0,
@@ -239,7 +221,8 @@ describe("complexNodeDiffs", () => {
                     }]
                 },
                 "structure": true
-            }]
+            }],
+            {complexSteps: true}
         )
     )
 
@@ -247,21 +230,17 @@ describe("complexNodeDiffs", () => {
 
 describe("textDiffs", () => {
     it("find text diff in one text node", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"))),
             doc(blockquote(p("The end text"))),
-            true,
-            false,
             [{"stepType":"replace", "from":6, "to":11, "slice":{"content":[{"type":"text","text":"end"}]}}]
         )
     )
 
     it("find text diffs in several nodes", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -297,11 +276,9 @@ describe("textDiffs", () => {
     )
 
     it("find text diffs in several nodes using word diffs", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The start text"), p("The second text"))),
             doc(blockquote(p("The end text"), p("The second sentence"))),
-            true,
-            true,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -322,16 +299,15 @@ describe("textDiffs", () => {
                         "text": "sentence"
                     }]
                 }
-            }]
+            }],
+            {wordDiffs: true}
         )
     )
 
     it("find several diffs in same text node", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
-            true,
-            false,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -397,11 +373,9 @@ describe("textDiffs", () => {
     )
 
     it("find several diffs in same text using word diffs", () =>
-        diff(
+        testRecreate(
             doc(blockquote(p("The cat is barking at the house"))),
             doc(blockquote(p("The dog is meauwing in the ship"))),
-            true,
-            true,
             [{
                 "stepType": "replace",
                 "from": 6,
@@ -442,7 +416,8 @@ describe("textDiffs", () => {
                         "text": "ship"
                     }]
                 }
-            }]
+            }],
+            {wordDiffs: true}
         )
     )
 })

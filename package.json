@@ -6,9 +6,9 @@
     "module": "src/index.js",
     "scripts": {
         "test": "mocha test/test-*.js",
-        "coverage": "nyc --reporter=html --check-coverage --statements 29 --branches 13 --lines 32 --functions 24 mocha test/test-*.js",
-        "build": "yarn run build_js && yarn run build_demo_js && yarn run build_css",
-        "build_demo_js": "yarn run build_merge_demo_js && yarn run build_merge2_demo_js && yarn run build_history_demo_js",
+        "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.14 --functions 33.87 mocha test/test-*.js",
+        "build": "npm run build_js && npm run build_demo_js && npm run build_css",
+        "build_demo_js": "npm run build_merge_demo_js && npm run build_merge2_demo_js && npm run build_history_demo_js",
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
         "build_merge2_demo_js": "rollup demo/merge2/index.js -c -f iife -o demo/merge2/index-build.js",
         "build_history_demo_js": "rollup demo/history/index.js -c -f iife -o demo/history/index-build.js",
@@ -28,7 +28,7 @@
     "license": "???",
     "dependencies": {
         "diff": "^3.5.0",
-        "prosemirror-changeset": "https://codeload.github.com/mpapp/prosemirror-changeset/legacy.tar.gz/76cde93",
+        "prosemirror-changeset": "https://codeload.github.com/mpapp/prosemirror-changeset/legacy.tar.gz/d30f8ba",
         "prosemirror-example-setup": "^1.0.1",
         "prosemirror-model": "^1.5.0",
         "prosemirror-schema-basic": "^1.0.0",

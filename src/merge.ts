@@ -1,13 +1,14 @@
 import { ChangeSet, Metadata, Span, DeletedSpan } from "prosemirror-changeset"
 import { Mapping, Step, Transform } from "prosemirror-transform"
 import { recreateTransform } from "./recreate"
-import { Slice } from "prosemirror-model";
+import { Node, Slice } from "prosemirror-model"
 
-export function mergeTransforms(tr1: Transform, tr2: Transform, rebase: boolean = false, wordDiffs: boolean = false): { tr: Transform, merge: Merge } {
+export function mergeTransforms(tr1, tr2, automerge = true, rebase = false, wordDiffs = false) {
         // Create conflicting steps. Make sure the steps are only ReplaceSteps so they can easily
         // be presented as alternatives to the user.
-    const {tr, changes, tr1NoConflicts, tr2NoConflicts} = automergeTransforms(tr1, tr2),
-
+    let {tr, changes, tr1NoConflicts, tr2NoConflicts} = automerge ?
+            automergeTransforms(tr1, tr2) :
+            noAutomergeTransforms(tr1, tr2),
         // find TRs that move from the docs that come out of the non-conflicting docs to the actual final docs, then map
         // them to the ending of tr.
         tr1Conflict = mapTransform(
@@ -214,11 +215,12 @@ export class Merge {
         return {merge: new Merge(this.doc, this.changes, conflicts, conflictingSteps1, conflictingSteps2, conflictingChanges)}
     }
 
-    public applyAll(user: number) {
-        const steps = this.conflictingSteps1.map(([index, step]) => step),
-            tr = new Transform(this.doc)
-        while (steps.length) {
-            const mapped = steps.pop().map(tr.mapping)
+    applyAll(user: number) {
+        // FIXME: https://gitlab.com/mpapp-private/prosemirror-recreate-steps/issues/2
+        let steps = (this as any).conflictingSteps.map(([index, step]) => step),
+            tr = new Transform(this.doc), changes = this.changes
+        while(steps.length) {
+            let mapped = steps.pop().map(tr.mapping)
             if (mapped && !tr.maybeStep(mapped).failed) {
                 this.changes = this.changes.addSteps(tr.doc, [tr.mapping.maps[tr.mapping.maps.length - 1]], {user})
             }
@@ -242,6 +244,16 @@ function trDoc(tr: Transform, index = 0): Node {
     return tr.docs.length > index ? tr.docs[index] : tr.doc
 }
 
+function noAutomergeTransforms(tr1, tr2) {
+    let doc = trDoc(tr1)
+    return {
+        tr: new Transform(doc),
+        changes: ChangeSet.create(doc, {compare: (a,b) => false}),
+        tr1NoConflicts: new Transform(doc),
+        tr2NoConflicts: new Transform(doc)
+    }
+}
+
 type AutomergeResult = {
     tr: Transform,
     changes: ChangeSet,
@@ -249,7 +261,7 @@ type AutomergeResult = {
     tr2NoConflicts: Transform
 }
 
-function automergeTransforms(tr1: Transform, tr2: Transform): AutomergeResult {
+function automergeTransforms(tr1, tr2): AutomergeResult {
     // Merge all non-conflicting steps with changes marked.
     const doc = trDoc(tr1),
         conflicts = findConflicts(tr1, tr2),

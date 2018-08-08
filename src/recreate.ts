@@ -12,7 +12,7 @@ function getReplaceStep(fromDoc: Node, toDoc: Node): ReplaceStep | null {
     let {
         a: endA,
         b: endB
-    } = toDoc.content.findDiffEnd(fromDoc.content as any)
+    } = toDoc.content.findDiffEnd(fromDoc.content as any) // the cast is necessary because findDiffEnd typing had a bug that's not yet been fixed in @types/prosemirror-model.
     const overlap = start - Math.min(endA, endB)
     if (overlap > 0) {
         if (
@@ -81,12 +81,11 @@ class RecreateTransform {
     public recreateChangeContentSteps() {
         // First step: find content changing steps.
         while (this.ops.length) {
-            let op = this.ops.shift()
-            let toDoc = null
-            const ops = [op]
+            let op = this.ops.shift(),
+                ops = [op],
+                afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
+                toDoc = null
             const pathParts = op.path.split('/')
-            const afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON))
-            
             while (!toDoc) {
                 applyPatch(afterStepJSON, [op])
                 try {
@@ -118,28 +117,28 @@ class RecreateTransform {
     public recreateChangeMarkSteps() {
         // Now the documents should be the same, except their marks, so everything should map 1:1.
         // Second step: Iterate through the toDoc and make sure all marks are the same in tr.doc
-
-        this.toDoc.descendants((node, pos) => {
-            if (!node.isInline) {
+        this.toDoc.descendants((tNode, tPos) => {
+            if (!tNode.isInline) {
                 return true
             }
-            (Object as any).values(this.schema.marks).forEach(mark => {
-                const nodeMarks = node.marks.filter(nodeMark => nodeMark.type === mark)
-                if (nodeMarks.length) {
-                    nodeMarks.forEach(nodeMark => this.tr.addMark(pos, pos + node.nodeSize, nodeMark))
-                } else {
-                    this.tr.removeMark(pos, pos + node.nodeSize, mark)
+
+            this.tr.doc.nodesBetween(tPos, tPos + tNode.nodeSize, (fNode, fPos) => {
+                if (!fNode.isInline) {
+                    return true
                 }
-            })
-            const newNode = this.tr.doc.nodeAt(pos)
-            if (newNode.marks.length !== node.marks.length) {
-                // At least one mark is only on the newNode, remove it.
-                newNode.marks.forEach(nodeMark => {
-                    if (!nodeMark.isInSet(node.marks)) {
-                        this.tr.removeMark(pos, pos + node.nodeSize, nodeMark)
+                const from = Math.max(tPos, fPos),
+                    to = Math.min(tPos + tNode.nodeSize, fPos + fNode.nodeSize)
+                fNode.marks.forEach(nodeMark => {
+                    if (!nodeMark.isInSet(tNode.marks)) {
+                        this.tr.removeMark(from, to, nodeMark)
                     }
                 })
-            }
+                tNode.marks.forEach(nodeMark => {
+                    if (!nodeMark.isInSet(fNode.marks)) {
+                        this.tr.addMark(from, to, nodeMark)
+                    }
+                })
+            })
         })
     }
 
@@ -150,9 +149,9 @@ class RecreateTransform {
     }
 
     // From http://prosemirror.net/examples/footnote/
-    public addReplaceStep(toDoc, afterStepJSON) {
-        const fromDoc = this.schema.nodeFromJSON(this.currentJSON)
-        const step = getReplaceStep(fromDoc, toDoc)
+    addReplaceStep(toDoc, afterStepJSON) {
+        const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
+            step = getReplaceStep(fromDoc, toDoc)
         if (step && !this.tr.maybeStep(step).failed) {
             this.currentJSON = afterStepJSON
         } else {
@@ -160,7 +159,7 @@ class RecreateTransform {
         }
     }
 
-    public addSetNodeMarkup() {
+    addSetNodeMarkup() {
         const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             toDoc = this.schema.nodeFromJSON(this.finalJSON),
             start = toDoc.content.findDiffStart(fromDoc.content),
@@ -177,19 +176,21 @@ class RecreateTransform {
     public addReplaceTextSteps(op: ReplaceOperation, afterStepJSON: { [key: string]: any }) {
         // We find the position number of the first character in the string
         const op1 = (Object as any).assign({}, op, {value: 'xx'}),
-            op2 = (Object as any).assign({}, op, {value: 'yy'}),
-            afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
-            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON))
+            op2 = (Object as any).assign({}, op, {value: 'yy'})
+
+        let afterOP1JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            afterOP2JSON = JSON.parse(JSON.stringify(this.currentJSON)),
+            pathParts = op.path.split('/'),
+            obj = this.currentJSON
 
         applyPatch(afterOP1JSON, [op1])
         applyPatch(afterOP2JSON, [op2])
 
-        const op1Doc = this.schema.nodeFromJSON(afterOP1JSON)
-        const op2Doc = this.schema.nodeFromJSON(afterOP2JSON)
+        const op1Doc = this.schema.nodeFromJSON(afterOP1JSON),
+            op2Doc = this.schema.nodeFromJSON(afterOP2JSON)
+
         let offset = op1Doc.content.findDiffStart(op2Doc.content)
-        const marks = op1Doc.resolve(offset + 1).marks()
-        const pathParts = op.path.split('/')
-        let obj = this.currentJSON
+        const marks = op1Doc.resolve(offset+1).marks()
 
         pathParts.shift()
 
@@ -199,10 +200,11 @@ class RecreateTransform {
         }
 
         const finalText = op.value,
-            currentText = obj,
-            textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
+            currentText = obj
 
-        while (textDiffs.length) {
+        let textDiffs = this.wordDiffs ? diffWordsWithSpace(currentText, finalText) : diffChars(currentText, finalText)
+
+        while(textDiffs.length) {
             const diff = textDiffs.shift()
             if (diff.added) {
                 if (textDiffs.length && textDiffs[0].removed) {
@@ -248,14 +250,15 @@ class RecreateTransform {
             oldSteps = this.tr.steps.slice()
         while (oldSteps.length) {
             let step = oldSteps.shift()
-            while (
-                (step instanceof ReplaceStep) &&
-                oldSteps.length &&
-                (oldSteps[0] instanceof ReplaceStep) &&
-                step.getMap().map((step as any).to) === (oldSteps[0] as any).from
+            while(
+                oldSteps.length && step.merge(oldSteps[0])
             ) {
                 const addedStep = oldSteps.shift()
-                step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc)
+                if (step instanceof ReplaceStep && addedStep instanceof ReplaceStep) {
+                    step = getReplaceStep(newTr.doc, addedStep.apply(step.apply(newTr.doc).doc).doc)
+                } else {
+                    step = step.merge(addedStep)
+                }
             }
             newTr.step(step)
         }
