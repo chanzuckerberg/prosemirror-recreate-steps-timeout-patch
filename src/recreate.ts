@@ -103,7 +103,7 @@ class RecreateTransform {
                 }
             }
 
-            if (this.complexSteps && ops.length === 1 && (pathParts.includes('attrs') || pathParts.includes('type'))) {
+            if (this.complexSteps && ops.length === 1 && ((pathParts.indexOf('attrs') >= 0) || (pathParts.indexOf('type') >= 0))) {
                 // Node markup is changing
                 this.addSetNodeMarkup()
             } else if (ops.length === 1 && op.op === 'replace' && pathParts[pathParts.length - 1] === 'text') {
