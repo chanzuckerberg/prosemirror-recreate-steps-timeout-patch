@@ -12,7 +12,7 @@
         "build_merge_demo_js": "rollup demo/merge/index.js -c -f iife -o demo/merge/index-build.js",
         "build_merge2_demo_js": "rollup demo/merge2/index.js -c -f iife -o demo/merge2/index-build.js",
         "build_history_demo_js": "rollup demo/history/index.js -c -f iife -o demo/history/index-build.js",
-        "build_js": "rollup src/index.ts -c -f cjs -o dist/index.js",
+        "build_js": "rollup src/index.js -c -f cjs -o dist/index.js",
         "build_css": "cat node_modules/prosemirror-example-setup/style/style.css node_modules/prosemirror-gapcursor/style/gapcursor.css node_modules/prosemirror-menu/style/menu.css > dist/style.css",
         "prepare": "yarn run build",
         "lint": "tslint src/*"
@@ -28,7 +28,7 @@
     "license": "???",
     "dependencies": {
         "diff": "^3.5.0",
-        "prosemirror-changeset": "https://codeload.github.com/mpapp/prosemirror-changeset/legacy.tar.gz/d30f8ba",
+        "prosemirror-changeset": "^1.0.3",
         "prosemirror-example-setup": "^1.0.1",
         "prosemirror-model": "^1.5.0",
         "prosemirror-schema-basic": "^1.0.0",

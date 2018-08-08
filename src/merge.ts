@@ -1,4 +1,4 @@
-import { ChangeSet, DeletedSpan, Metadata, Span } from "prosemirror-changeset"
+import { ChangeSet, Metadata } from "prosemirror-changeset"
 import { Node, Slice } from "prosemirror-model"
 import { Mapping, Step, Transform } from "prosemirror-transform"
 import { recreateTransform } from "./recreate"
@@ -25,7 +25,7 @@ export interface ChangeSetLike {
 
 interface AutomergeResult {
     tr: Transform,
-    changes: ChangeSet,
+    changes: ChangeSetLike,
     tr1NoConflicts?: Transform,
     tr2NoConflicts?: Transform
 }
