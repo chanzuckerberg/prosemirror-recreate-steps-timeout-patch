@@ -92,12 +92,12 @@ function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs
 }
 
 export class Merge {
-    public doc: Node
-    public changes: ChangeSet
-    public conflicts: any
-    public conflictingSteps1: Array<Array<Step<any>>>
-    public conflictingSteps2: Array<Array<Step<any>>>
-    public conflictingChanges: ChangeSetLike
+    public readonly doc: Node
+    public readonly changes: ChangeSet
+    public readonly conflicts: Array<[Step<any>, Step<any>]>
+    public readonly conflictingSteps1: Array<Array<Step<any>>>
+    public readonly conflictingSteps2: Array<Array<Step<any>>>
+    public readonly conflictingChanges: ChangeSetLike
 
     constructor(
         doc,
@@ -309,7 +309,7 @@ function removeConflictingSteps(tr: Transform, conflicts): Transform {
     return newTr
 }
 
-function findConflicts(tr1: Transform, tr2: Transform) {
+function findConflicts(tr1: Transform, tr2: Transform): [Step<any>, Step<any>] {
     const changes1 = findContentChanges(tr1),
         changes2 = findContentChanges(tr2),
         conflicts = []
