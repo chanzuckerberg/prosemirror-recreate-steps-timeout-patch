@@ -95,8 +95,8 @@ export class Merge {
     public doc: Node
     public changes: ChangeSet
     public conflicts: any
-    public conflictingSteps1: any
-    public conflictingSteps2: any
+    public conflictingSteps1: Array<Array<Step<any>>>
+    public conflictingSteps2: Array<Array<Step<any>>>
     public conflictingChanges: ChangeSetLike
 
     constructor(
@@ -138,7 +138,7 @@ export class Merge {
                     conflicts = conflicts.filter(conflict => conflict[0] !== index)
                     inserted = inserted.filter(inserted => inserted.data.user !== 1 || inserted.data.index !== index)
                     deleted = deleted.filter(deleted => deleted.data.user !== 1 || deleted.data.index !== index)
-                    return false
+                    return null
                 }
             }
         ).filter(step => step)
@@ -158,7 +158,7 @@ export class Merge {
                     conflicts = conflicts.filter(conflict => conflict[1] !== index)
                     inserted = inserted.filter(inserted => inserted.data.user !== 2 || inserted.data.index !== index)
                     deleted = deleted.filter(deleted => deleted.data.user !== 2 || deleted.data.index !== index)
-                    return false
+                    return null
                 }
             }
         ).filter(step => step)
@@ -182,12 +182,12 @@ export class Merge {
 
         if (user === 1) {
             conflictingSteps1 = conflictingSteps1.map(
-                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? null : [conflictIndex, conflictStep.map(map)]
             ).filter(step => step)
             conflicts = conflicts.filter(conflict => conflict[0] !== index)
         } else {
             conflictingSteps2 = conflictingSteps2.map(
-                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep.map(map)]
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? null : [conflictIndex, conflictStep.map(map)]
             ).filter(step => step)
             conflicts = conflicts.filter(conflict => conflict[1] !== index)
         }
@@ -211,12 +211,12 @@ export class Merge {
 
         if (user === 1) {
             conflictingSteps1 = conflictingSteps1.map(
-                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? null : [conflictIndex, conflictStep]
             ).filter(step => step)
             conflicts = conflicts.filter(conflict => conflict[0] !== index)
         } else {
             conflictingSteps2 = conflictingSteps2.map(
-                ([conflictIndex, conflictStep]) => conflictIndex === index ? false : [conflictIndex, conflictStep]
+                ([conflictIndex, conflictStep]) => conflictIndex === index ? null : [conflictIndex, conflictStep]
             ).filter(step => step)
             conflicts = conflicts.filter(conflict => conflict[1] !== index)
         }
