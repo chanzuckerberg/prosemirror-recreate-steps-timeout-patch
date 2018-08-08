@@ -11,9 +11,11 @@ export interface MergeTransformPair {
 export interface SpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number }
 export interface DeletedSpanLike { data: {[key: string]: any}, slice ?: Slice, pos ?: number, from: number, to: number }
 
-export interface ConflictingChangeSet {
-    inserted: SpanLike,
-    deleted: DeletedSpanLike
+export interface ConflictingChangeSetLike {
+    inserted: SpanLike[],
+    deleted: DeletedSpanLike[],
+    conflictingSteps1 ?: Array<Array<Step<any>>>,
+    conflictingSteps2 ?: Array<Array<Step<any>>>
 }
 
 export interface ChangeSetLike {
@@ -68,7 +70,7 @@ export function mergeTransforms(tr1: Transform, tr2: Transform, automerge = true
     }
 }
 
-function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs) {
+function rebaseMergedTransform(doc, nonConflictingDoc, conflictingDoc, wordDiffs): MergeTransformPair {
     const trNonConflict = recreateTransform(doc, nonConflictingDoc, true, wordDiffs),
         changes = ChangeSet.create(doc, {compare: (a: Metadata, b: Metadata) => false}).addSteps(nonConflictingDoc, trNonConflict.mapping.maps, {user: 2}),
         trConflict = recreateTransform(nonConflictingDoc, conflictingDoc, false, wordDiffs),
@@ -366,13 +368,13 @@ function findContentChanges(tr: Transform): ChangeSetLike {
     return {inserted, deleted}
 }
 
-function createConflictingChanges(tr1Conflict: Transform, tr2Conflict: Transform): {inserted: Span[], deleted: DeletedSpan[], conflictingSteps1, conflictingSteps2} {
+function createConflictingChanges(tr1Conflict: Transform, tr2Conflict: Transform): ConflictingChangeSetLike {
     const doc = trDoc(tr1Conflict)
     // We map the steps so that the positions are all at the level of the current
     // doc as there is no guarantee for the order in which they will be applied.
     // If one of them is being applied, the other ones will have to be remapped.
-    const conflictingSteps1 = tr1Conflict.steps.map((step: Step, index) => [index, step.map((new Mapping(tr1Conflict.mapping.maps.slice(0, index)) as any).invert())])
-    const conflictingSteps2 = tr2Conflict.steps.map((step: Step, index) => [index, step.map((new Mapping(tr2Conflict.mapping.maps.slice(0, index)) as any).invert())])
+    const conflictingSteps1: Array<Array<Step<any>>> = tr1Conflict.steps.map((step: Step, index) => [index, step.map((new Mapping(tr1Conflict.mapping.maps.slice(0, index)) as any).invert())]) as any
+    const conflictingSteps2: Array<Array<Step<any>>> = tr2Conflict.steps.map((step: Step, index) => [index, step.map((new Mapping(tr2Conflict.mapping.maps.slice(0, index)) as any).invert())]) as any
     let inserted = []
     let deleted = []
     const iter = [
