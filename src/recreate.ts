@@ -1,7 +1,8 @@
 import { diffChars, diffWordsWithSpace } from "diff/lib"
 import { Node, Schema } from "prosemirror-model"
 import { ReplaceStep, Step, Transform } from "prosemirror-transform"
-import { applyPatch, createPatch } from "rfc6902"
+import { applyPatch, createPatch, Operation } from "rfc6902"
+import { ReplaceOperation } from "rfc6902/diff";
 
 function getReplaceStep(fromDoc: Node, toDoc: Node): ReplaceStep | null {
     let start = toDoc.content.findDiffStart(fromDoc.content)
@@ -142,7 +143,7 @@ class RecreateTransform {
         })
     }
 
-    public marklessDoc(doc) {
+    public marklessDoc(doc): Node<any> {
         const tr = new Transform(doc)
         tr.removeMark(0, doc.nodeSize - 2)
         return tr.doc
@@ -173,7 +174,7 @@ class RecreateTransform {
         }
     }
 
-    public addReplaceTextSteps(op, afterStepJSON) {
+    public addReplaceTextSteps(op: ReplaceOperation, afterStepJSON: { [key: string]: any }) {
         // We find the position number of the first character in the string
         const op1 = (Object as any).assign({}, op, {value: 'xx'}),
             op2 = (Object as any).assign({}, op, {value: 'yy'}),
