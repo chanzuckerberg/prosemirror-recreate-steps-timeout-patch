@@ -42,9 +42,9 @@ class RecreateTransform {
     
     public schema: Schema
     public tr: Transform
-    public currentJSON: any
-    public finalJSON: any
-    public ops: any
+    public currentJSON: {[key: string]: any}
+    public finalJSON: {[key: string]: any}
+    public ops: Operation[]
 
     constructor(fromDoc: Node, toDoc: Node, complexSteps: boolean, wordDiffs: boolean) {
         this.fromDoc = fromDoc
@@ -78,7 +78,7 @@ class RecreateTransform {
         return this.tr
     }
 
-    public recreateChangeContentSteps() {
+    public recreateChangeContentSteps(): void {
         // First step: find content changing steps.
         while (this.ops.length) {
             let op = this.ops.shift(),
@@ -115,7 +115,7 @@ class RecreateTransform {
         }
     }
 
-    public recreateChangeMarkSteps() {
+    public recreateChangeMarkSteps(): void {
         // Now the documents should be the same, except their marks, so everything should map 1:1.
         // Second step: Iterate through the toDoc and make sure all marks are the same in tr.doc
         this.toDoc.descendants((tNode, tPos) => {
@@ -150,7 +150,7 @@ class RecreateTransform {
     }
 
     // From http://prosemirror.net/examples/footnote/
-    public addReplaceStep(toDoc, afterStepJSON) {
+    public addReplaceStep(toDoc, afterStepJSON): void {
         const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             step = getReplaceStep(fromDoc, toDoc)
         if (step && !this.tr.maybeStep(step).failed) {
@@ -160,7 +160,7 @@ class RecreateTransform {
         }
     }
 
-    public addSetNodeMarkup() {
+    public addSetNodeMarkup(): void {
         const fromDoc = this.schema.nodeFromJSON(this.currentJSON),
             toDoc = this.schema.nodeFromJSON(this.finalJSON),
             start = toDoc.content.findDiffStart(fromDoc.content),
@@ -242,7 +242,7 @@ class RecreateTransform {
     }
 
     // join adjacent ReplaceSteps
-    public simplifyTr() {
+    public simplifyTr(): void {
         if (!this.tr.steps.length) {
             return
         }
@@ -265,7 +265,7 @@ class RecreateTransform {
     }
 }
 
-export function recreateTransform(fromDoc, toDoc, complexSteps = true, wordDiffs = false) {
+export function recreateTransform(fromDoc: Node, toDoc: Node, complexSteps: boolean = true, wordDiffs: boolean = false): Transform<any> {
     const recreator = new RecreateTransform(fromDoc, toDoc, complexSteps, wordDiffs)
     return recreator.init()
 }

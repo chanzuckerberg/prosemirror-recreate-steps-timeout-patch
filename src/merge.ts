@@ -229,7 +229,7 @@ export class Merge {
     }
 }
 
-function mapTransform(tr, doc, map) {
+function mapTransform(tr, doc, map): Transform<any> {
     const newTr = new Transform(doc)
     tr.steps.forEach(step => {
         const mapped = step.map(map)
@@ -302,7 +302,7 @@ function removeConflictingSteps(tr: Transform, conflicts): Transform {
     return newTr
 }
 
-function findConflicts(tr1, tr2) {
+function findConflicts(tr1: Transform, tr2: Transform) {
     const changes1 = findContentChanges(tr1),
         changes2 = findContentChanges(tr2),
         conflicts = []
@@ -346,7 +346,7 @@ function findConflicts(tr1, tr2) {
     return conflicts
 }
 
-function findContentChanges(tr: Transform) {
+function findContentChanges(tr: Transform): ChangeSetLike {
     const doc = trDoc(tr)
     let changes = ChangeSet.create(doc, {compare: (a, b) => false})
     tr.steps.forEach((step, index) => {
@@ -361,7 +361,7 @@ function findContentChanges(tr: Transform) {
     return {inserted, deleted}
 }
 
-function createConflictingChanges(tr1Conflict, tr2Conflict): {inserted: Span[], deleted: DeletedSpan[], conflictingSteps1, conflictingSteps2} {
+function createConflictingChanges(tr1Conflict: Transform, tr2Conflict: Transform): {inserted: Span[], deleted: DeletedSpan[], conflictingSteps1, conflictingSteps2} {
     const doc = trDoc(tr1Conflict)
     // We map the steps so that the positions are all at the level of the current
     // doc as there is no guarantee for the order in which they will be applied.
@@ -377,10 +377,10 @@ function createConflictingChanges(tr1Conflict, tr2Conflict): {inserted: Span[], 
 
     iter.forEach(({steps, user}) =>
         steps.forEach(([index, step]) => {
-            const stepResult = step.apply(doc)
+            const stepResult = (step as Step).apply(doc)
             // We need the potential changes if this step was to be applied. We find
             // the inversion of the change so that we can place it in the current doc.
-            const invertedStepChanges = ChangeSet.create(stepResult.doc, {compare: (a, b) => false}).addSteps(doc, [step.invert(doc).getMap()], {index, user})
+            const invertedStepChanges = ChangeSet.create(stepResult.doc, {compare: (a, b) => false}).addSteps(doc, [(step as Step).invert(doc).getMap()], {index, user})
             deleted = deleted.concat(invertedStepChanges.inserted.map(inserted => ({from: inserted.from, to: inserted.to, data: inserted.data})))
             inserted = inserted.concat(invertedStepChanges.deleted.map(deleted => ({pos: deleted.pos, slice: deleted.slice, data: deleted.data})))
         })
