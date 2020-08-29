@@ -1,7 +1,7 @@
 {
-    "name": "@manuscripts/prosemirror-recreate-steps",
+    "name": "prosemirror-recreate-steps-timeout-patch",
     "version": "0.1.4",
-    "description": "Find and merge changes between two prosemirror documents without access to the steps.",
+    "description": "Patch for @manuscripts/prosemirror-recreate-steps to include timeout",
     "main": "dist/index.js",
     "module": "src/index.js",
     "types": "index.d.ts",
@@ -10,7 +10,7 @@
         "src",
         "index.d.ts"
     ],
-    "repository": "gitlab:mpapp-public/prosemirror-recreate-steps",
+    "repository": "github:chanzuckerberg/prosemirror-recreate-steps-timeout-patch.git",
     "scripts": {
         "test": "mocha test/test-*.js",
         "coverage": "nyc --reporter=html --check-coverage --statements 36.11 --branches 18.9 --lines 39.13 --functions 33.87 mocha test/test-*.js",
@@ -47,7 +47,8 @@
         "prosemirror-state": "^1.2.2",
         "prosemirror-transform": "^1.1.3",
         "prosemirror-view": "^1.5.3",
-        "rfc6902": "^3.0.1"
+        "rfc6902": "^3.0.1",
+        "rfc6902-timeout-patch": "github:chanzuckerberg/rfc6902-timeout-patch"
     },
     "devDependencies": {
         "@manuscripts/publish": "^0.2.1",
