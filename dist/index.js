@@ -7920,6 +7920,19 @@ var lib_18 = lib.diffWords;
 var lib_19 = lib.diffChars;
 var lib_20 = lib.Diff;
 
+// czi: if timed out throw error
+function isTimedOut(timeout, startTimestamp) {
+  if (
+    timeout &&
+    startTimestamp &&
+    Date.now() - startTimestamp >= timeout
+  ) {
+    throw new Error('Diff timed out!')
+  }
+
+  return false;
+}
+
 function getReplaceStep(fromDoc, toDoc) {
   let start = toDoc.content.findDiffStart(fromDoc.content);
   if (start === null) {
@@ -7952,9 +7965,12 @@ class RecreateTransform {
     this.schema = fromDoc.type.schema;
     this.tr = new dist_1$1(fromDoc);
     this.timeout = timeout;
+    this.startTimestamp = null;
   }
 
   init() {
+    this.startTimestamp = Date.now();
+
     if (this.complexSteps) {
       // For First steps: we create versions of the documents without marks as
       // these will only confuse the diffing mechanism and marks won't cause
@@ -7981,12 +7997,14 @@ class RecreateTransform {
     // First step: find content changing steps.
     let ops = [];
     while (this.ops.length) {
+      isTimedOut(this.timeout, this.startTimestamp);
       let op = this.ops.shift(),
         toDoc = false;
       const afterStepJSON = JSON.parse(JSON.stringify(this.currentJSON)),
         pathParts = op.path.split("/");
       ops.push(op);
       while (!toDoc) {
+        isTimedOut(this.timeout, this.startTimestamp);
         rfc6902TimeoutPatch_3(afterStepJSON, [op]);
         try {
           toDoc = this.schema.nodeFromJSON(afterStepJSON);
@@ -8177,8 +8195,10 @@ class RecreateTransform {
     const newTr = new dist_1$1(this.tr.docs[0]),
       oldSteps = this.tr.steps.slice();
     while (oldSteps.length) {
+      isTimedOut(this.timeout, this.startTimestamp);
       let step = oldSteps.shift();
       while (oldSteps.length && step.merge(oldSteps[0])) {
+        isTimedOut(this.timeout, this.startTimestamp);
         const addedStep = oldSteps.shift();
         if (step instanceof dist_17 && addedStep instanceof dist_17) {
           step = getReplaceStep(
