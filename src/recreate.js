@@ -1,7 +1,8 @@
 import { Transform, ReplaceStep } from "prosemirror-transform";
 // czi: use rfc6902 patch to provide timeout
 import { applyPatch, createPatch } from "rfc6902-timeout-patch";
-import { diffWordsWithSpace, diffChars } from "diff";
+// czi: use diff patch to provide timeout
+import { diffWordsWithSpace, diffChars } from "diff-timeout-patch";
 
 // czi: if timed out throw error
 function isTimedOut(timeout, startTimestamp) {
@@ -223,9 +224,14 @@ class RecreateTransform {
     const finalText = op.value,
       currentText = obj;
 
+    const textDiffsOptions = {
+      timeout: this.timeout,
+      startTimestamp: this.startTimestamp,
+    };
+
     const textDiffs = this.wordDiffs
-      ? diffWordsWithSpace(currentText, finalText)
-      : diffChars(currentText, finalText);
+      ? diffWordsWithSpace(currentText, finalText, textDiffsOptions)
+      : diffChars(currentText, finalText, textDiffsOptions);
 
     while (textDiffs.length) {
       const diff = textDiffs.shift();
