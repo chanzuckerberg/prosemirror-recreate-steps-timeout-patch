@@ -39,7 +39,7 @@
         "@types/prosemirror-schema-list": "^1.0.1",
         "@types/prosemirror-state": "^1.2.0",
         "@types/prosemirror-transform": "^1.1.0",
-        "diff-timeout-patch": "github:chanzuckerberg/diff-timeout-patch#0f0537f0033c360c33673e3160e9a7a5512e4eae",
+        "diff-timeout-patch": "github:chanzuckerberg/diff-timeout-patch#2dd789d0e371f5ee3dcda4c715baf6347bdc1739",
         "prosemirror-changeset": "^1.0.5",
         "prosemirror-example-setup": "^1.0.1",
         "prosemirror-model": "^1.6.1",
