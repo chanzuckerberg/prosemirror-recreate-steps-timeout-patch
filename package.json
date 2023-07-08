@@ -59,7 +59,7 @@
         "eslint-plugin-promise": "^4.0.1",
         "eslint-plugin-standard": "^4.0.0",
         "ist": "^1.1.1",
-        "jshint": "^2.9.6",
+        "jshint": "^2.13.6",
         "mocha": "^5.2.0",
         "nyc": "^13.0.1",
         "prosemirror-test-builder": "^1.0.1",
